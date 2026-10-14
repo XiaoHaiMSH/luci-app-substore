@@ -78,8 +78,9 @@ jobs:
       - name: Setup feeds
         run: |
           cd openwrt-sdk
-          ./scripts/feeds update luci
+          ./scripts/feeds update luci packages
           ./scripts/feeds install -a -p luci
+          ./scripts/feeds install lua
 
       - name: Copy package
         run: |
@@ -92,6 +93,8 @@ jobs:
         run: |
           cd openwrt-sdk
           make defconfig
+          # luci-compat 依赖 lucihttp/nixio 的 Lua 绑定，需要先编译出 lua.h
+          make package/feeds/packages/lua/compile V=s > lua-build.log 2>&1 || { tail -80 lua-build.log; exit 1; }
           if ! make package/luci-app-substore/compile V=s \
               > build.log 2>&1; then
             echo "=== 编译失败，日志最后 150 行 ==="
@@ -147,8 +150,9 @@ jobs:
       - name: Setup feeds
         run: |
           cd openwrt-sdk
-          ./scripts/feeds update luci
+          ./scripts/feeds update luci packages
           ./scripts/feeds install -a -p luci
+          ./scripts/feeds install lua
 
       - name: Copy package
         run: |
@@ -160,6 +164,8 @@ jobs:
         run: |
           cd openwrt-sdk
           make defconfig
+          # luci-compat 依赖 lucihttp/nixio 的 Lua 绑定，需要先编译出 lua.h
+          make package/feeds/packages/lua/compile V=s > lua-build.log 2>&1 || { tail -80 lua-build.log; exit 1; }
           if ! make package/luci-app-substore/compile V=s \
               > build.log 2>&1; then
             echo "=== 编译失败，日志最后 150 行 ==="
