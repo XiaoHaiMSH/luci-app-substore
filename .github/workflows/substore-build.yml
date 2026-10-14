@@ -80,7 +80,7 @@ jobs:
           cd openwrt-sdk
           ./scripts/feeds update luci packages
           ./scripts/feeds install -a -p luci
-          ./scripts/feeds install lua
+          ./scripts/feeds install lua || true
 
       - name: Copy package
         run: |
@@ -94,7 +94,14 @@ jobs:
           cd openwrt-sdk
           make defconfig
           # luci-compat 依赖 lucihttp/nixio 的 Lua 绑定，需要先编译出 lua.h
-          make package/feeds/packages/lua/compile V=s > lua-build.log 2>&1 || { tail -80 lua-build.log; exit 1; }
+          LUA_MK=$(find -L package -maxdepth 4 -name Makefile -exec grep -l '^PKG_NAME:=lua$' {} + 2>/dev/null | head -n1)
+          if [ -z "$LUA_MK" ]; then
+            echo "未找到 lua 包，当前 feeds 如下："
+            ls package/feeds/ package/feeds/packages 2>&1 | head -50
+            exit 1
+          fi
+          echo "lua 包路径: $(dirname "$LUA_MK")"
+          make "$(dirname "$LUA_MK")/compile" V=s > lua-build.log 2>&1 || { tail -80 lua-build.log; exit 1; }
           if ! make package/luci-app-substore/compile V=s \
               > build.log 2>&1; then
             echo "=== 编译失败，日志最后 150 行 ==="
@@ -152,7 +159,7 @@ jobs:
           cd openwrt-sdk
           ./scripts/feeds update luci packages
           ./scripts/feeds install -a -p luci
-          ./scripts/feeds install lua
+          ./scripts/feeds install lua || true
 
       - name: Copy package
         run: |
@@ -165,7 +172,14 @@ jobs:
           cd openwrt-sdk
           make defconfig
           # luci-compat 依赖 lucihttp/nixio 的 Lua 绑定，需要先编译出 lua.h
-          make package/feeds/packages/lua/compile V=s > lua-build.log 2>&1 || { tail -80 lua-build.log; exit 1; }
+          LUA_MK=$(find -L package -maxdepth 4 -name Makefile -exec grep -l '^PKG_NAME:=lua$' {} + 2>/dev/null | head -n1)
+          if [ -z "$LUA_MK" ]; then
+            echo "未找到 lua 包，当前 feeds 如下："
+            ls package/feeds/ package/feeds/packages 2>&1 | head -50
+            exit 1
+          fi
+          echo "lua 包路径: $(dirname "$LUA_MK")"
+          make "$(dirname "$LUA_MK")/compile" V=s > lua-build.log 2>&1 || { tail -80 lua-build.log; exit 1; }
           if ! make package/luci-app-substore/compile V=s \
               > build.log 2>&1; then
             echo "=== 编译失败，日志最后 150 行 ==="
