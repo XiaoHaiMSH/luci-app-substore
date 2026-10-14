@@ -1,0 +1,47 @@
+<%+header%>
+
+<h2 name="content">Sub-Store · 运行日志</h2>
+<div class="cbi-map-descr">显示系统日志中与 Sub-Store 相关的最近 300 行输出。</div>
+
+<div class="cbi-section">
+	<div style="margin-bottom:10px;display:flex;gap:16px;align-items:center;flex-wrap:wrap">
+		<button type="button" class="cbi-button cbi-button-action" id="ss_log_refresh">刷新</button>
+		<label><input type="checkbox" id="ss_log_auto" checked="checked" /> 自动刷新（5 秒）</label>
+		<label><input type="checkbox" id="ss_log_follow" checked="checked" /> 自动滚动到底部</label>
+	</div>
+	<textarea id="ss_log" readonly="readonly" wrap="off"
+		style="width:100%;height:60vh;min-height:320px;font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:12px;line-height:1.55;border-radius:10px;padding:12px;resize:vertical;box-sizing:border-box"></textarea>
+</div>
+
+<script type="text/javascript">
+(function () {
+	'use strict';
+	var URL_LOG = '<%=url("admin/services/substore/get_log")%>';
+	var box = document.getElementById('ss_log');
+	var auto = document.getElementById('ss_log_auto');
+	var follow = document.getElementById('ss_log_follow');
+	var timer = null;
+
+	function load() {
+		fetch(URL_LOG, { credentials: 'same-origin', cache: 'no-store' })
+			.then(function (r) { return r.text(); })
+			.then(function (t) {
+				box.value = t;
+				if (follow.checked) box.scrollTop = box.scrollHeight;
+			})
+			.catch(function () {});
+	}
+
+	function schedule() {
+		clearInterval(timer);
+		if (auto.checked) timer = setInterval(function () { if (!document.hidden) load(); }, 5000);
+	}
+
+	document.getElementById('ss_log_refresh').addEventListener('click', load);
+	auto.addEventListener('change', schedule);
+	load();
+	schedule();
+})();
+</script>
+
+<%+footer%>

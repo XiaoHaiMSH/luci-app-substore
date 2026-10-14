@@ -1,0 +1,267 @@
+<style>
+#ss_root{--ok:#22c55e;--bad:#ef4444;--warn:#f59e0b;--info:#3b82f6;--line:rgba(127,127,127,.28);--soft:rgba(127,127,127,.08);margin:4px 0 12px}
+#ss_root *{box-sizing:border-box}
+#ss_root .ss-card{border:1px solid var(--line);border-radius:12px;background:var(--soft);padding:16px 18px;margin-bottom:14px}
+#ss_root .ss-hero{display:flex;align-items:center;gap:16px;flex-wrap:wrap;border-left:4px solid var(--bad);transition:border-color .3s}
+#ss_root .ss-hero.on{border-left-color:var(--ok)}
+#ss_root .ss-icon{width:54px;height:54px;border-radius:12px;object-fit:cover;flex:none}
+#ss_root .ss-info{flex:1 1 220px;min-width:0}
+#ss_root .ss-title{display:flex;align-items:center;gap:8px;font-size:20px;font-weight:700;line-height:1.3}
+#ss_root .ss-dot{width:10px;height:10px;border-radius:50%;background:var(--bad);flex:none;animation:ss-pulse-bad 2s ease-in-out infinite}
+#ss_root .on .ss-dot{background:var(--ok);animation-name:ss-pulse-ok}
+#ss_root .ss-state{font-size:15px;font-weight:600;color:var(--bad)}
+#ss_root .on .ss-state{color:var(--ok)}
+#ss_root .ss-sub{margin-top:4px;font-size:13px;opacity:.7}
+#ss_root .ss-actions{display:flex;gap:8px;flex-wrap:wrap}
+#ss_root .ss-actions button,#ss_root .ss-ver button{margin:0!important;min-width:92px}
+#ss_root .ss-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px;margin-bottom:14px}
+#ss_root .ss-tile{border:1px solid var(--line);border-radius:12px;background:var(--soft);padding:12px 16px}
+#ss_root .ss-tile .k{font-size:12px;opacity:.65;margin-bottom:4px}
+#ss_root .ss-tile .v{font-size:18px;font-weight:700;word-break:break-all}
+#ss_root .ss-ver{display:flex;align-items:center;gap:12px;padding:8px 0;flex-wrap:wrap}
+#ss_root .ss-ver + .ss-ver{border-top:1px dashed var(--line)}
+#ss_root .ss-ver .n{width:64px;font-size:13px;opacity:.7;flex:none}
+#ss_root .ss-ver .val{flex:1 1 140px;min-width:0;font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:13px;word-break:break-all}
+#ss_root .ss-msg{display:none;border-radius:10px;padding:10px 14px;font-size:13px;border:1px solid var(--line);border-left-width:4px}
+#ss_root .ss-msg.show{display:block}
+#ss_root .ss-msg.ok{border-left-color:var(--ok)}
+#ss_root .ss-msg.bad{border-left-color:var(--bad)}
+#ss_root .ss-msg.warn{border-left-color:var(--warn)}
+#ss_root .ss-msg.busy{border-left-color:var(--info)}
+@keyframes ss-pulse-ok{0%,100%{box-shadow:0 0 0 0 rgba(34,197,94,.55)}50%{box-shadow:0 0 0 6px rgba(34,197,94,0)}}
+@keyframes ss-pulse-bad{0%,100%{box-shadow:0 0 0 0 rgba(239,68,68,.5)}50%{box-shadow:0 0 0 6px rgba(239,68,68,0)}}
+@media (max-width:600px){#ss_root .ss-actions{width:100%}#ss_root .ss-actions button{flex:1 1 40%}}
+</style>
+
+<div id="ss_root">
+	<div class="ss-card ss-hero" id="ss_hero">
+		<img class="ss-icon" id="ss_icon" src="<%=resource%>/substore/icon-stopped.png" alt="" onerror="this.style.display='none'" />
+		<div class="ss-info">
+			<div class="ss-title"><span class="ss-dot"></span><span>SubStore</span><span class="ss-state" id="ss_state">检测中…</span></div>
+			<div class="ss-sub" id="ss_sub">高级订阅管理器</div>
+		</div>
+		<div class="ss-actions">
+			<button type="button" class="cbi-button cbi-button-apply" id="ss_btn_open" disabled>打开面板</button>
+			<button type="button" class="cbi-button cbi-button-action" id="ss_btn_toggle" disabled>启动服务</button>
+			<button type="button" class="cbi-button cbi-button-reload" id="ss_btn_restart" disabled>重启服务</button>
+		</div>
+	</div>
+
+	<div class="ss-grid">
+		<div class="ss-tile"><div class="k">服务端口</div><div class="v" id="ss_port">—</div></div>
+		<div class="ss-tile"><div class="k">内存占用</div><div class="v" id="ss_mem">—</div></div>
+		<div class="ss-tile"><div class="k">已运行时间</div><div class="v" id="ss_up">—</div></div>
+		<div class="ss-tile"><div class="k">开机自启</div><div class="v" id="ss_boot">—</div></div>
+	</div>
+
+	<div class="ss-card">
+		<div class="ss-ver">
+			<span class="n">后端版本</span><span class="val" id="ss_bver">—</span>
+			<button type="button" class="cbi-button cbi-button-action" id="ss_btn_ub" disabled>更新后端</button>
+		</div>
+		<div class="ss-ver">
+			<span class="n">前端版本</span><span class="val" id="ss_fver">—</span>
+			<button type="button" class="cbi-button cbi-button-action" id="ss_btn_uf" disabled>更新前端</button>
+		</div>
+	</div>
+
+	<div class="ss-msg" id="ss_msg"></div>
+</div>
+
+<script type="text/javascript">
+(function () {
+	'use strict';
+
+	var URLS = {
+		status:  '<%=url("admin/services/substore/get_status")%>',
+		service: '<%=url("admin/services/substore/service")%>',
+		update:  '<%=url("admin/services/substore/update")%>'
+	};
+	var TOKEN = '<%=token%>';
+	var ICON_ON  = '<%=resource%>/substore/icon-running.png';
+	var ICON_OFF = '<%=resource%>/substore/icon-stopped.png';
+
+	var S = { data: null, busy: false, ownUpdate: null, timer: null };
+
+	function $(id) { return document.getElementById(id); }
+
+	function request(url, params) {
+		var opt = { credentials: 'same-origin', cache: 'no-store' };
+		if (params) {
+			var body = ['token=' + encodeURIComponent(TOKEN)];
+			Object.keys(params).forEach(function (k) {
+				body.push(encodeURIComponent(k) + '=' + encodeURIComponent(params[k]));
+			});
+			opt.method = 'POST';
+			opt.headers = { 'Content-Type': 'application/x-www-form-urlencoded' };
+			opt.body = body.join('&');
+		}
+		return fetch(url, opt).then(function (r) {
+			if (!r.ok) throw new Error('HTTP ' + r.status);
+			return r.json();
+		});
+	}
+
+	function fmtBytes(n) {
+		if (n == null) return '—';
+		var u = ['B', 'KB', 'MB', 'GB'], i = 0;
+		while (n >= 1024 && i < u.length - 1) { n /= 1024; i++; }
+		return (i === 0 ? n : n.toFixed(1)) + ' ' + u[i];
+	}
+
+	function fmtDuration(s) {
+		if (s == null) return '—';
+		var d = Math.floor(s / 86400), h = Math.floor(s % 86400 / 3600),
+		    m = Math.floor(s % 3600 / 60), sec = s % 60;
+		if (d > 0) return d + '天 ' + h + '时';
+		if (h > 0) return h + '时 ' + m + '分';
+		if (m > 0) return m + '分 ' + sec + '秒';
+		return sec + '秒';
+	}
+
+	function fmtVer(v) {
+		if (!v || v === 'unknown') return '未知';
+		return v.length > 40 ? v.slice(0, 40) + '…' : v;
+	}
+
+	function showMsg(type, text) {
+		var el = $('ss_msg');
+		if (!text) { el.className = 'ss-msg'; el.textContent = ''; return; }
+		el.className = 'ss-msg show ' + type;
+		el.textContent = text;
+	}
+
+	function panelUrl(d) {
+		var host = location.hostname;
+		if (host.indexOf(':') !== -1 && host.charAt(0) !== '[') host = '[' + host + ']';
+		var base = 'http://' + host + ':' + d.port;
+		return base + '?api=' + base + d.api_path;
+	}
+
+	function isUpdating() {
+		return !!(S.data && S.data.update && S.data.update.state === 'RUNNING');
+	}
+
+	function refreshButtons() {
+		var d = S.data;
+		var lock = S.busy || isUpdating() || !d || !d.enabled;
+		$('ss_btn_open').disabled    = !d || !d.enabled || !d.running;
+		$('ss_btn_toggle').disabled  = lock;
+		$('ss_btn_restart').disabled = lock;
+		$('ss_btn_ub').disabled      = lock;
+		$('ss_btn_uf').disabled      = lock;
+		$('ss_btn_toggle').textContent = (d && d.running) ? '停止服务' : '启动服务';
+		var tip = (d && !d.enabled) ? '服务未启用，请先在“参数设置”中勾选启用' : '';
+		['ss_btn_toggle', 'ss_btn_restart', 'ss_btn_ub', 'ss_btn_uf'].forEach(function (id) {
+			$(id).title = tip;
+		});
+	}
+
+	function handleUpdateState(d) {
+		var u = d.update;
+		if (u && u.state === 'RUNNING') {
+			showMsg('busy', u.message);
+			return;
+		}
+		if (S.ownUpdate && u && u.kind === S.ownUpdate) {
+			var label = u.kind === 'backend' ? '后端' : '前端';
+			if (u.state === 'OK')          showMsg('ok', label + '已更新' + (u.kind === 'backend' ? '并重启成功。' : '。'));
+			else if (u.state === 'LATEST') showMsg('ok', '当前已是最新版本 ' + u.message + '，无需更新。');
+			else                           showMsg('bad', label + '更新失败：' + u.message);
+			S.ownUpdate = null;
+		}
+	}
+
+	function render(d) {
+		S.data = d;
+		$('ss_hero').className = 'ss-card ss-hero' + (d.running ? ' on' : '');
+		var icon = $('ss_icon');
+		icon.style.display = '';
+		icon.src = d.running ? ICON_ON : ICON_OFF;
+		$('ss_state').textContent = d.running ? '运行中' : '未运行';
+		$('ss_sub').textContent = !d.enabled
+			? '服务未启用，请前往“参数设置”勾选启用'
+			: (d.running ? '服务运行正常，点击“打开面板”管理订阅' : '服务已启用但未运行，可查看“运行日志”排查');
+		$('ss_port').textContent = d.port;
+		$('ss_mem').textContent  = d.running ? fmtBytes(d.rss) : '—';
+		$('ss_up').textContent   = d.running ? fmtDuration(d.uptime) : '—';
+		$('ss_boot').textContent = d.enabled ? '已启用' : '未启用';
+		$('ss_bver').textContent = fmtVer(d.backend_version);
+		$('ss_fver').textContent = fmtVer(d.frontend_version);
+		handleUpdateState(d);
+		refreshButtons();
+	}
+
+	function tick() {
+		clearTimeout(S.timer);
+		var next = function () {
+			var fast = S.busy || S.ownUpdate || isUpdating();
+			S.timer = setTimeout(tick, fast ? 1500 : 5000);
+		};
+		if (document.hidden) { next(); return; }
+		request(URLS.status).then(render).catch(function () {}).then(next);
+	}
+
+	function waitFor(expectRunning, n) {
+		return request(URLS.status).then(function (d) {
+			render(d);
+			if (d.running === expectRunning) return true;
+			if (n <= 0) return false;
+			return new Promise(function (res) { setTimeout(res, 700); }).then(function () {
+				return waitFor(expectRunning, n - 1);
+			});
+		});
+	}
+
+	function serviceAction(action, pending, done, expectRunning) {
+		if (S.busy) return;
+		S.busy = true;
+		refreshButtons();
+		showMsg('busy', pending);
+		request(URLS.service, { action: action }).then(function (r) {
+			if (!r.ok) throw new Error('命令执行失败');
+			return waitFor(expectRunning, 20);
+		}).then(function (ok) {
+			showMsg(ok ? 'ok' : 'warn', ok ? done : '命令已执行，但状态未按预期变化，请查看“运行日志”。');
+		}).catch(function (e) {
+			showMsg('bad', '操作失败：' + e.message);
+		}).then(function () {
+			S.busy = false;
+			tick();
+		});
+	}
+
+	function startUpdate(kind) {
+		if (S.busy || !S.data || !S.data.enabled) return;
+		S.ownUpdate = kind;
+		showMsg('busy', '正在提交更新任务...');
+		request(URLS.update, { kind: kind }).then(function (r) {
+			if (!r.ok) {
+				S.ownUpdate = null;
+				showMsg('bad', r.message || '无法开始更新');
+				return;
+			}
+			tick();
+		}).catch(function (e) {
+			S.ownUpdate = null;
+			showMsg('bad', '请求失败：' + e.message);
+		});
+	}
+
+	$('ss_btn_open').addEventListener('click', function () {
+		if (S.data) window.open(panelUrl(S.data), '_blank');
+	});
+	$('ss_btn_toggle').addEventListener('click', function () {
+		if (!S.data) return;
+		if (S.data.running) serviceAction('stop', '正在停止服务...', '服务已停止。', false);
+		else                serviceAction('start', '正在启动服务...', '服务已启动。', true);
+	});
+	$('ss_btn_restart').addEventListener('click', function () {
+		serviceAction('restart', '正在重启服务...', '服务已重启。', true);
+	});
+	$('ss_btn_ub').addEventListener('click', function () { startUpdate('backend'); });
+	$('ss_btn_uf').addEventListener('click', function () { startUpdate('frontend'); });
+
+	tick();
+})();
+</script>
