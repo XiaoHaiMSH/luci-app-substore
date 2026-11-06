@@ -6,8 +6,8 @@ LUCI_DEPENDS:=+luci-compat +node +unzip +wget-ssl
 PKG_NAME:=luci-app-substore
 PKG_VERSION:=2026.10.10
 PKG_RELEASE:=1
-PKG_LICENSE:=GPL-3.0
-PKG_MAINTAINER:=xiaohaisly卧槽泥马
+PKG_LICENSE:=GPL-4.0
+PKG_MAINTAINER:=xiaohaisly
 
 include $(TOPDIR)/feeds/luci/luci.mk
 
