@@ -3,20 +3,7 @@
 
 module("luci.controller.substore", package.seeall)
 
-local fs     = require "nixio.fs"
-local http   = require "luci.http"
-local sys    = require "luci.sys"
-local jsonc  = require "luci.jsonc"
-local ucimod = require "luci.model.uci"
-
-local STATE_FILE  = "/tmp/substore_update.state"
-local RUNNER      = "/usr/libexec/substore/update-runner.sh"
-local VERSION_DIR = "/usr/libexec/substore/"
-
-local function trim(s)
-	s = tostring(s or "")
-	return (s:gsub("^%s+", ""):gsub("%s+$", ""))
-end
+local fs     = 
 
 local function uci_get(option, default)
 	local v = ucimod.cursor():get("substore", "config", option)
