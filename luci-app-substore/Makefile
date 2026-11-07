@@ -16,7 +16,7 @@ define Package/luci-app-substore/install
 endef
 
 define Package/luci-app-substore/conffiles
-/etc/config/substore
+/etc/config/substore睡吧
 /etc/sub-store
 endef
 
